@@ -80,9 +80,8 @@ import {
 import {
   getAuth,
   signInWithEmailAndPassword,
+  signInWithPopup,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
 } from "firebase/auth";
 import { database } from "@/main";
 export default {
@@ -120,9 +119,17 @@ export default {
           }
         });
     },
-    signInwithGoogle() {
+    async signInwithGoogle() {
       const provider = new GoogleAuthProvider();
-      signInWithRedirect(getAuth(), provider);
+      signInWithPopup(getAuth(), provider)
+        .then(async (result) => {
+          const user = result.user;
+          await this.createuser(user);
+          this.$router.push("/overview");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
     async createuser(user) {
       const q = query(
@@ -141,21 +148,13 @@ export default {
       }
     },
   },
-  async mounted() {
-    try {
-      const result = await getRedirectResult(getAuth());
-      if (result) {
-        const user = result.user;
-        await this.createuser(user);
-        this.$router.push("/overview");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  },
   computed: {
     passwordShow() {
-      return this.showPassword ? "text" : "password";
+      if (this.showPassword) {
+        return "text";
+      } else {
+        return "password";
+      }
     },
   },
 };
